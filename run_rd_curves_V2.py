@@ -17,10 +17,10 @@ from plotting import visualize_and_save
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 # Configuration derived from run_rd_curve.py and eval_rd.py
-OCMR_MAT_DATA_DIR = "../../dataset/OCMR_data/"
-JPEG_QUALITIES = [10, 20]#, 30, 40, 50, 60, 70, 80, 90]
-CRFS = [18, 23]#, 28, 33, 38, 43, 48, 51]
-CRATIOS = [5, 10]#, 20, 40, 80, 160]
+OCMR_MAT_DATA_DIR = "../../../dataset/OCMR_data/"
+JPEG_QUALITIES = [10, 20, 30, 40, 50, 60, 70, 80, 90]
+CRFS = [18, 23, 28, 33, 38, 43, 48, 51]
+CRATIOS = [5, 10, 20, 40, 80, 160]
 
 CODECS = ["jpeg", "jpeg2000", "h264", "h265"]
 

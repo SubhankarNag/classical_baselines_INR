@@ -44,7 +44,9 @@ def compress_video_from_vol(kspace, out_dir, codec="h265", crf=23):
                 out_video = out_dir/f"{key}.mp4"
 
                 cmd = [
-                    "ffmpeg","-y",
+                    "ffmpeg",
+                    "-loglevel", "error",  # only errors
+                    "-y",
                     "-framerate","10",
                     "-i",str(tmp/"frame_%04d.png"),
                     "-c:v",ffcodec,
@@ -77,7 +79,9 @@ def decompress_video(compressed_dir, output_npy):
         video_file = compressed_dir/f"{key}.mp4"
 
         cmd = [
-            "ffmpeg","-y",
+            "ffmpeg",
+            "-loglevel", "error",  # only errors
+            "-y",
             "-i",str(video_file),
             "-pix_fmt", "gray16le",
             str(tmp/"frame_%04d.png")
