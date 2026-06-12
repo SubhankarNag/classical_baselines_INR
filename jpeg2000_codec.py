@@ -51,7 +51,7 @@ def compress_jpeg2000_from_vol(kspace, out_dir, cratio=20):
             f
         )
 
-def decompress_jpeg2000(compressed_dir, output_npy):
+def decompress_jpeg2000(compressed_dir, output_path):
     compressed_dir = Path(compressed_dir)
 
     with open(compressed_dir/"meta.pkl","rb") as f:
@@ -77,4 +77,4 @@ def decompress_jpeg2000(compressed_dir, output_npy):
 
         out[:,:,z,c,t,p] = img
 
-    np.save(output_npy, out)
+    np.savez_compressed(output_path, data=out)

@@ -107,20 +107,20 @@ def run_evaluation():
                     
                     work_dir = Path(args.output_dir) / filename.replace(".h5", "") / tag
                     work_dir.mkdir(parents=True, exist_ok=True)
-                    recon_npy = work_dir / "reconstructed.npy"
+                    recon_npz = work_dir / "reconstructed.npz"
 
                     # 1. Pipeline: Compress then Decompress
                     if codec == "jpeg":
                         compress_jpeg(input_path, work_dir, quality=p)
-                        decompress_jpeg(work_dir, recon_npy)
+                        decompress_jpeg(work_dir, recon_npz)
                         exts = [".jpg"]
                     elif codec == "jpeg2000":
                         compress_jpeg2000(input_path, work_dir, cratio=p)
-                        decompress_jpeg2000(work_dir, recon_npy)
+                        decompress_jpeg2000(work_dir, recon_npz)
                         exts = [".jp2"]
                     else:
                         compress_video(input_path, work_dir, codec=codec, crf=p)
-                        decompress_video(work_dir, recon_npy)
+                        decompress_video(work_dir, recon_npz)
                         exts = [".mp4"]
 
                     # 2. Compression Ratio
@@ -128,7 +128,7 @@ def run_evaluation():
                     ratio = orig_size / comp_size if comp_size > 0 else 0
 
                     # 3. Load & Process Reconstruction
-                    recon_ri = np.load(recon_npy).astype(np.float32)
+                    recon_ri = np.load(recon_npz)["data"].astype(np.float32)
                     recon_complex, recon_rsos = derive_complex_and_rsos(recon_ri)
 
                     # 4. Metric Computation
@@ -160,9 +160,6 @@ def run_evaluation():
                     writer.writerow(res_row)
                     all_metrics_data.append(res_row)
                     f.flush()
-
-                    # 7. Cleanup
-                    if os.path.exists(recon_npy): os.remove(recon_npy)
 
     plot_all_rd_curves(all_metrics_data, args.output_dir)
 

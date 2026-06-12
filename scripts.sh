@@ -28,4 +28,4 @@ python eval_rd.py \
     --files "fs_0045_3T.h5"
 
 
-python /home/subhankar/codes/classical_baselines_INR/run_rd_curves_V2.py --files fs_0045_3T.h5 fs_0095_1_5T.h5 fs_0069_1_5T.h5
+python -u run_rd_curves_V2.py --files fs_0045_3T.h5 fs_0095_1_5T.h5 fs_0069_1_5T.h5

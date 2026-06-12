@@ -28,45 +28,39 @@ def run_jpeg_rd(input_path, original_vol, out_root):
     results = []
     for q in tqdm(JPEG_QUALITIES, desc="JPEG RD Curve"):
         comp_dir = os.path.join(out_root, f"jpeg_q{q}")
-        recon_path = os.path.join(comp_dir, "reconstructed.npy")
+        recon_path = os.path.join(comp_dir, "reconstructed.npz")
         compress_jpeg(input_path, comp_dir, q)
         decompress_jpeg(comp_dir, recon_path)
         
-        recon = np.load(recon_path)
+        recon = np.load(recon_path)["data"]
         ratio = os.path.getsize(input_path) / folder_size(comp_dir, [".jpg"])
         results.append({"param": q, "ratio": ratio, "rrmse": calculate_rrmse(original_vol, recon)})
-        # Clean up heavy reconstruction file
-        os.remove(recon_path)
     return results
 
 def run_jpeg2000_rd(input_path, original_vol, out_root):
     results = []
     for cr in tqdm(CRATIOS, desc="JPEG2000 RD Curve"):
         comp_dir = os.path.join(out_root, f"j2k_cr{cr}")
-        recon_path = os.path.join(comp_dir, "reconstructed.npy")
+        recon_path = os.path.join(comp_dir, "reconstructed.npz")
         compress_jpeg2000(input_path, comp_dir, cr)
         decompress_jpeg2000(comp_dir, recon_path)
 
-        recon = np.load(recon_path)
+        recon = np.load(recon_path)["data"]
         ratio = os.path.getsize(input_path) / folder_size(comp_dir, [".jp2"])
         results.append({"param": cr, "ratio": ratio, "rrmse": calculate_rrmse(original_vol, recon)})
-        # Clean up heavy reconstruction file
-        os.remove(recon_path)
     return results
 
 def run_video_rd(input_path, original_vol, out_root, codec="h265"):
     results = []
     for crf in tqdm(CRFS, desc=f"{codec.upper()} RD Curve"):
         comp_dir = os.path.join(out_root, f"{codec}_crf{crf}")
-        recon_path = os.path.join(comp_dir, "reconstructed.npy")
+        recon_path = os.path.join(comp_dir, "reconstructed.npz")
         compress_video(input_path, comp_dir, codec, crf)
         decompress_video(comp_dir, recon_path)
 
-        recon = np.load(recon_path)
+        recon = np.load(recon_path)["data"]
         ratio = os.path.getsize(input_path) / folder_size(comp_dir, [".mp4"])
         results.append({"param": crf, "ratio": ratio, "rrmse": calculate_rrmse(original_vol, recon)})
-        # Clean up heavy reconstruction file
-        os.remove(recon_path)
     return results
 
 def plot_rd(all_data, out_path):

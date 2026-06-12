@@ -38,7 +38,7 @@ def compress_jpeg_from_vol(kspace, out_dir, quality=50):
     with open(out_dir/"meta.pkl","wb") as f:
         pickle.dump({"shape":kspace.shape,"meta":meta},f)
 
-def decompress_jpeg(compressed_dir, output_npy):
+def decompress_jpeg(compressed_dir, output_path):
     compressed_dir = Path(compressed_dir)
 
     with open(compressed_dir/"meta.pkl","rb") as f:
@@ -63,4 +63,4 @@ def decompress_jpeg(compressed_dir, output_npy):
 
         out[:,:,z,c,t,p] = arr
 
-    np.save(output_npy,out)
+    np.savez_compressed(output_path, data=out)

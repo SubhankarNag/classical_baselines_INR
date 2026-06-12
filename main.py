@@ -37,7 +37,7 @@ def compression_ratio(original_file, compressed_folder, codec):
 
 def calculate_rrmse(original_file, recon_file):
     original = load_vol(original_file)
-    reconstructed = np.load(recon_file)
+    reconstructed = np.load(recon_file)["data"]
 
     # RRMSE = ||orig - recon||_2 / ||orig||_2
     rrmse = np.linalg.norm(original - reconstructed) / np.linalg.norm(original)
@@ -50,7 +50,7 @@ def run_jpeg(input_file, output_dir, quality):
 
     compress_jpeg(npy_file=input_file, out_dir=output_dir, quality=quality)
 
-    recon_file = os.path.join(output_dir, "reconstructed.npy")
+    recon_file = os.path.join(output_dir, "reconstructed.npz")
 
     print("Reconstructing JPEG...")
 
@@ -69,7 +69,7 @@ def run_jpeg2000(input_file, output_dir, cratio):
 
     compress_jpeg2000(npy_file=input_file, out_dir=output_dir, cratio=cratio)
 
-    recon_file = os.path.join(output_dir, "reconstructed.npy")
+    recon_file = os.path.join(output_dir, "reconstructed.npz")
 
     print("Reconstructing JPEG2000...")
 
@@ -88,7 +88,7 @@ def run_video(input_file, output_dir, codec, crf):
 
     compress_video(npy_file=input_file, out_dir=output_dir, codec=codec, crf=crf)
 
-    recon_file = os.path.join(output_dir, "reconstructed.npy")
+    recon_file = os.path.join(output_dir, "reconstructed.npz")
 
     print(f"Reconstructing {codec}...")
 

@@ -18,9 +18,9 @@ from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 # Configuration derived from run_rd_curve.py and eval_rd.py
 OCMR_MAT_DATA_DIR = "../../../dataset/OCMR_data/"
-JPEG_QUALITIES = [20, 35, 50, 65, 80] #[10, 20, 30, 40, 50, 60, 70, 80, 90]
-CRFS = [23, 29, 36, 42, 48] #[18, 23, 28, 33, 38, 43, 48, 51]
-CRATIOS = [20, 35, 50, 65, 80] #[5, 10, 20, 40, 80, 160]
+JPEG_QUALITIES = [1, 3, 5, 7, 10, 13, 16, 19] #[20, 35, 50, 65, 80] #[10, 20, 30, 40, 50, 60, 70, 80, 90]
+CRATIOS = [80, 110, 130, 160, 183, 205, 228, 250] #[20, 35, 50, 65, 80] #[5, 10, 20, 40, 80, 160]
+CRFS = [25, 26, 27, 28, 29, 30, 31, 32, 33, 35] #[23, 29, 36, 42, 48] #[18, 23, 28, 33, 38, 43, 48, 51]
 
 CODECS = ["jpeg", "jpeg2000", "h264", "h265"]
 
@@ -113,10 +113,28 @@ def main():
     ]
 
     all_results = []
+    if os.path.exists(csv_path):
+        try:
+            with open(csv_path, "r", newline='') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    # Convert numeric columns for plotting and skip-logic
+                    for k in ["Ratio", "Comp_Time", "Decomp_Time", "Vol_RRMSE", "Vol_PSNR", "Vol_SSIM", "Vol_LPIPS", "RSOS_RRMSE", "RSOS_PSNR", "RSOS_SSIM", "RSOS_LPIPS"]:
+                        if k in row: row[k] = float(row[k])
+                    try: row["Param"] = int(row["Param"])
+                    except:
+                        try: row["Param"] = float(row["Param"])
+                        except: pass
+                    all_results.append(row)
+            print(f"Loaded {len(all_results)} existing results from {csv_path}")
+        except Exception as e:
+            print(f"Error loading existing CSV: {e}")
     
-    with open(csv_path, "w", newline='') as f:
+    file_exists = os.path.isfile(csv_path)
+    with open(csv_path, "a", newline='') as f:
         writer = csv.DictWriter(f, fieldnames=csv_headers)
-        writer.writeheader()
+        if not file_exists or os.path.getsize(csv_path) == 0:
+            writer.writeheader()
 
         # for each file 
         for filename in args.files:
@@ -138,11 +156,15 @@ def main():
 
                 for p in params:
                     tag = f"{codec}_{p}"
+                    if any(r["Filename"] == filename and r["Codec"] == codec and r["Param"] == p for r in all_results):
+                        print(f"  Skipping {filename} | {tag}: Already in results.")
+                        continue
+
                     print(f"  Benchmarking {filename} | {tag}...")
                     
                     work_dir = Path(args.output_dir) / filename.replace(".h5", "") / tag
                     work_dir.mkdir(parents=True, exist_ok=True)
-                    recon_npy = work_dir / "reconstructed.npy"
+                    recon_npz = work_dir / "reconstructed.npz"
 
                     # 1. Pipeline: Compress then Decompress with Timing
                     try:
@@ -152,7 +174,7 @@ def main():
                             comp_time = time.time() - s_time
                             
                             s_time = time.time()
-                            decompress_jpeg(work_dir, recon_npy)
+                            decompress_jpeg(work_dir, recon_npz)
                             decomp_time = time.time() - s_time
                             exts = [".jpg"]
                         elif codec == "jpeg2000":
@@ -161,7 +183,7 @@ def main():
                             comp_time = time.time() - s_time
                             
                             s_time = time.time()
-                            decompress_jpeg2000(work_dir, recon_npy)
+                            decompress_jpeg2000(work_dir, recon_npz)
                             decomp_time = time.time() - s_time
                             exts = [".jp2"]
                         else: # h264, h265
@@ -170,7 +192,7 @@ def main():
                             comp_time = time.time() - s_time
                             
                             s_time = time.time()
-                            decompress_video(work_dir, recon_npy)
+                            decompress_video(work_dir, recon_npz)
                             decomp_time = time.time() - s_time
                             exts = [".mp4"]
                     except Exception as e:
@@ -182,7 +204,7 @@ def main():
                     ratio = orig_size / comp_size if comp_size > 0 else 0
 
                     # 3. Process Reconstruction
-                    recon_ri = np.load(recon_npy).astype(np.float32)
+                    recon_ri = np.load(recon_npz)["data"].astype(np.float32)
                     recon_complex, recon_rsos = derive_complex_and_rsos(recon_ri)
 
                     # 4. Metric Computation
@@ -216,8 +238,6 @@ def main():
                     all_results.append(res)
                     f.flush()
 
-                    # 7. Cleanup reconstruction file to save disk space
-                    if os.path.exists(recon_npy): os.remove(recon_npy)
 
     if all_results:
         plot_all_rd_curves(all_results, args.output_dir)
