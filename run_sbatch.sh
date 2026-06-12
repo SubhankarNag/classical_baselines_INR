@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=a40
 #SBATCH --qos=a40
-#SBATCH -J COIN++
+#SBATCH -J CIMGC
 #SBATCH -t 96:00:00
 #SBATCH -o logs/%j.out               # name of stdout output file(--output)
 #SBATCH -e logs/%j.err               # name of stderr error file(--error)
@@ -29,18 +29,7 @@ echo "Starting Execution at: $(date)"
 
 
 
-CUDA_VISIBLE_DEVICES=0 python -u run_rd_curves_V2.py 
-    --files fs_0045_3T.h5 \
-    fs_0095_1_5T.h5 \
-    fs_0069_1_5T.h5 \
-    fs_0057_1_5T.h5 \
-    fs_0056_1_5T.h5 \
-    fs_0060_1_5T.h5 \
-    fs_0068_1_5T.h5 \
-    fs_0074_1_5T.h5 \
-    fs_0053_1_5T.h5 \
-    fs_0063_1_5T.h5 \
-    fs_0012_3T.h5
+CUDA_VISIBLE_DEVICES=0 python -u run_rd_curves_V2.py --files fs_0045_3T.h5 fs_0095_1_5T.h5 fs_0069_1_5T.h5 fs_0057_1_5T.h5 fs_0056_1_5T.h5 fs_0060_1_5T.h5 fs_0068_1_5T.h5 fs_0074_1_5T.h5 fs_0053_1_5T.h5 fs_0063_1_5T.h5 fs_0012_3T.h5
 
 
 

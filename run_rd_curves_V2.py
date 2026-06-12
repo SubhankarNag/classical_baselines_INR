@@ -18,9 +18,9 @@ from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 # Configuration derived from run_rd_curve.py and eval_rd.py
 OCMR_MAT_DATA_DIR = "../../../dataset/OCMR_data/"
-JPEG_QUALITIES = [10, 20, 30, 40, 50, 60, 70, 80, 90]
-CRFS = [18, 23, 28, 33, 38, 43, 48, 51]
-CRATIOS = [5, 10, 20, 40, 80, 160]
+JPEG_QUALITIES = [20, 35, 50, 65, 80] #[10, 20, 30, 40, 50, 60, 70, 80, 90]
+CRFS = [23, 29, 36, 42, 48] #[18, 23, 28, 33, 38, 43, 48, 51]
+CRATIOS = [20, 35, 50, 65, 80] #[5, 10, 20, 40, 80, 160]
 
 CODECS = ["jpeg", "jpeg2000", "h264", "h265"]
 
@@ -118,6 +118,7 @@ def main():
         writer = csv.DictWriter(f, fieldnames=csv_headers)
         writer.writeheader()
 
+        # for each file 
         for filename in args.files:
             input_path = os.path.join(OCMR_MAT_DATA_DIR, filename)
             if not os.path.exists(input_path):
@@ -130,6 +131,7 @@ def main():
             orig_size = os.path.getsize(input_path)
             W, H, D, C, T = orig_complex.shape
 
+            # for each type of compression 
             for codec in CODECS:
                 params = JPEG_QUALITIES if codec == "jpeg" else \
                          CRATIOS if codec == "jpeg2000" else CRFS
