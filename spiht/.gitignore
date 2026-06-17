@@ -1,0 +1,11 @@
+.DS_Store
+*.gif
+*.png
+*.m4a
+*.mp4
+**/*/__pycache__/
+__pycache__/
+**/*/.DS_Store
+Cargo.lock
+*.so
+target/

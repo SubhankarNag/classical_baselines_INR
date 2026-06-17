@@ -28,7 +28,6 @@ outputs/
 results*/
 benchmarks/
 
-# spiht/
 *.png
 
 # Weights & Biases
