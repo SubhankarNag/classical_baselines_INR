@@ -50,7 +50,8 @@ def compress_video_from_vol(kspace, out_dir, codec="h265", crf=23):
                     "-framerate","10",
                     "-i",str(tmp/"frame_%04d.png"),
                     "-c:v",ffcodec,
-                    "-crf",str(crf),
+                    # "-crf",str(crf),
+                    "-b:v",str(crf),
                     "-pix_fmt","gray16le",
                     str(out_video)
                 ]

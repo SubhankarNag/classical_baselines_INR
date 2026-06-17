@@ -1,0 +1,30 @@
+Installation:
+-------------------
+git clone https://github.com/theAdamColton/spiht.git
+
+
+conda create -n spiht python=3.10 -y
+conda activate spiht
+pip install -r requirements.txt
+
+curl https://sh.rustup.rs -sSf | sh
+pip install maturin networkx
+maturin develop --release
+source ~/.cargo/env
+
+# Check
+rustc --version
+cargo --version
+
+# Run 
+python demonstrate.py
+
+
+#
+in demonstrat... Change it to:
+color_space='IPT'
+
+
+# Extra: 
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+pip install matplotlib ismrmrd pandas torchmetrics

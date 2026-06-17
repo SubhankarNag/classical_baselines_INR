@@ -8,21 +8,41 @@ from pathlib import Path
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from jpeg_codec import compress_jpeg_from_vol, decompress_jpeg
-from jpeg2000_codec import compress_jpeg2000_from_vol, decompress_jpeg2000
-from video_codec import compress_video_from_vol, decompress_video
+# from jpeg_codec import compress_jpeg_from_vol, decompress_jpeg
+# from jpeg2000_codec import compress_jpeg2000_from_vol, decompress_jpeg2000
+# from video_codec import compress_video_from_vol, decompress_video
+
+from spiht_codec import compress_spiht_from_vol, decompress_spiht
+
+
 from utils import load_vol
 from eval import compute_rrmse, compute_batched_metrics
 from plotting import visualize_and_save
 from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 
 # Configuration derived from run_rd_curve.py and eval_rd.py
-OCMR_MAT_DATA_DIR = "../../../dataset/OCMR_data/"
-JPEG_QUALITIES = [1, 3, 5, 7, 10, 13, 16, 19] #[20, 35, 50, 65, 80] #[10, 20, 30, 40, 50, 60, 70, 80, 90]
-CRATIOS = [80, 110, 130, 160, 183, 205, 228, 250] #[20, 35, 50, 65, 80] #[5, 10, 20, 40, 80, 160]
-CRFS = [25, 26, 27, 28, 29, 30, 31, 32, 33, 35] #[23, 29, 36, 42, 48] #[18, 23, 28, 33, 38, 43, 48, 51]
+OCMR_MAT_DATA_DIR = "../../dataset/OCMR_data/"
+# JPEG_QUALITIES = [1, 3, 5, 7, 10, 13, 16, 19] #[20, 35, 50, 65, 80] #[10, 20, 30, 40, 50, 60, 70, 80, 90]
+# CRATIOS = [80, 110, 130, 160, 183, 205, 228, 250] #[20, 35, 50, 65, 80] #[5, 10, 20, 40, 80, 160]
+# CRFS = [25, 26, 27, 28, 29, 30, 31, 32, 33, 35] #[23, 29, 36, 42, 48] #[18, 23, 28, 33, 38, 43, 48, 51]
+# bitrate
+# CRFS = ["10K", "20K", "30K", "40K", "50K", "60K", "70K", "80K", "90K", "100K", "130K", "200k"]
 
-CODECS = ["jpeg", "jpeg2000", "h264", "h265"]
+# CODECS = ["h264", "h265"] #["jpeg", "jpeg2000", "h264", "h265"]
+
+CODECS = ["spiht"]
+SPIHT_BPPS = [
+    0.01,   # ~800x
+    0.0125, # ~640x
+    0.015,  # ~533x
+    0.02,   # ~400x
+    0.025,  # ~320x
+    0.033,  # ~242x
+    0.04,   # ~200x
+    0.05,   # ~160x
+    0.067,   # ~120x
+    0.1
+]
 
 def get_folder_size(path, extensions=None):
     total = 0
@@ -93,7 +113,7 @@ def plot_all_rd_curves(results_list, output_dir):
 def main():
     parser = argparse.ArgumentParser(description="Comprehensive RD Curve Benchmarking V2")
     parser.add_argument("--files", nargs="+", required=True, help="Filenames in OCMR_data (e.g. fs_0045_3T.h5)")
-    parser.add_argument("--output_dir", type=str, default="results_rd_v2")
+    parser.add_argument("--output_dir", type=str, default="results_rd_v2_spiht")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -152,7 +172,8 @@ def main():
             # for each type of compression 
             for codec in CODECS:
                 params = JPEG_QUALITIES if codec == "jpeg" else \
-                         CRATIOS if codec == "jpeg2000" else CRFS
+                         CRATIOS if codec == "jpeg2000" else \
+                         CRFS if codec in ["h264", "h265"] else SPIHT_BPPS
 
                 for p in params:
                     tag = f"{codec}_{p}"
@@ -186,6 +207,22 @@ def main():
                             decompress_jpeg2000(work_dir, recon_npz)
                             decomp_time = time.time() - s_time
                             exts = [".jp2"]
+                        elif codec == "spiht":
+                            s_time = time.time()
+                            compress_spiht_from_vol(
+                                orig_ri,
+                                work_dir,
+                                bpp=p
+                            )
+                            comp_time = time.time() - s_time
+                            
+                            s_time = time.time()
+                            decompress_spiht(
+                                work_dir,
+                                recon_npz
+                            )
+                            decomp_time = time.time() - s_time
+                            exts = [".spiht"]
                         else: # h264, h265
                             s_time = time.time()
                             compress_video_from_vol(orig_ri, work_dir, codec=codec, crf=p)
@@ -195,6 +232,7 @@ def main():
                             decompress_video(work_dir, recon_npz)
                             decomp_time = time.time() - s_time
                             exts = [".mp4"]
+                        
                     except Exception as e:
                         print(f"    Error processing {tag}: {e}")
                         continue
