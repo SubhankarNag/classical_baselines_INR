@@ -13,7 +13,7 @@ from spiht import (
 from utils import load_vol
 
 wavelet = "bior2.2"
-quantization_scale = 1.0
+quantization_scale = 1000.0
 mode = "reflect"
 level = None
 color_space = None
@@ -82,11 +82,15 @@ def compress_spiht_from_vol(kspace, out_dir, bpp=0.1):
                     with open(out_dir / fname, "wb") as f:
                         f.write(encoded.encoded_bytes)
 
+                    # Remove encoded_bytes from meta to avoid storing data twice
+                    encoded_meta = encoded.to_dict()
+                    encoded_meta.pop("encoding_result_encoded_bytes", None)
+
                     meta[fname] = {
                         "min": mn,
                         "max": mx,
                         "orig_shape": img.shape,
-                        **encoded.to_dict()
+                        **encoded_meta
                     }
 
     with open(out_dir / "meta.pkl", "wb") as f:
@@ -126,6 +130,7 @@ def decompress_spiht(compressed_dir, output_path):
             for k, v in entry.items()
             if k.startswith("encoding_result_")
         }
+        enc_dict["encoding_result_encoded_bytes"] = b"" # Placeholder for from_dict
         encoding_result = EncodingResult.from_dict(enc_dict)
         encoding_result.encoded_bytes = encoded_bytes
         

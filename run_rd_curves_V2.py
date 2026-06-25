@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 
 # from jpeg_codec import compress_jpeg_from_vol, decompress_jpeg
 # from jpeg2000_codec import compress_jpeg2000_from_vol, decompress_jpeg2000
-# from video_codec import compress_video_from_vol, decompress_video
+from video_codec import compress_video_from_vol, decompress_video
 
-from spiht_codec import compress_spiht_from_vol, decompress_spiht
+# from spiht_codec import compress_spiht_from_vol, decompress_spiht
 
 
 from utils import load_vol
@@ -26,23 +26,29 @@ OCMR_MAT_DATA_DIR = "../../dataset/OCMR_data/"
 # CRATIOS = [80, 110, 130, 160, 183, 205, 228, 250] #[20, 35, 50, 65, 80] #[5, 10, 20, 40, 80, 160]
 # CRFS = [25, 26, 27, 28, 29, 30, 31, 32, 33, 35] #[23, 29, 36, 42, 48] #[18, 23, 28, 33, 38, 43, 48, 51]
 # bitrate
-# CRFS = ["10K", "20K", "30K", "40K", "50K", "60K", "70K", "80K", "90K", "100K", "130K", "200k"]
+CRFS = ["10K", "20K", "30K", "40K", "50K", "60K", "70K", "80K", "90K", "100K", "130K", "200k"]
 
-# CODECS = ["h264", "h265"] #["jpeg", "jpeg2000", "h264", "h265"]
+CODECS = ["h266"] #["jpeg", "jpeg2000", "h264", "h265"]
 
-CODECS = ["spiht"]
-SPIHT_BPPS = [
-    0.01,   # ~800x
-    0.0125, # ~640x
-    0.015,  # ~533x
-    0.02,   # ~400x
-    0.025,  # ~320x
-    0.033,  # ~242x
-    0.04,   # ~200x
-    0.05,   # ~160x
-    0.067,   # ~120x
-    0.1
-]
+# CODECS = ["spiht"]
+# SPIHT_BPPS = [
+#     # 16.0,
+#     # 8.0,
+#     # 4.0,
+#     # 2.0,
+#     # 1.0,
+#     0.7,
+#     0.6,
+#     0.5,
+#     0.4,
+#     0.3,
+#     0.2,
+#     0.1,
+#     0.08,
+#     0.06,
+#     0.04,
+#     0.02,
+# ]
 
 def get_folder_size(path, extensions=None):
     total = 0
@@ -51,6 +57,23 @@ def get_folder_size(path, extensions=None):
             if extensions is None or any(f.lower().endswith(ext) for ext in extensions):
                 total += os.path.getsize(os.path.join(root, f))
     return total
+
+
+# def get_folder_size(path, extensions=None):
+#     total = 0
+
+#     for root, _, files in os.walk(path):
+#         for f in files:
+#             include_file = (
+#                 extensions is None
+#                 or any(f.lower().endswith(ext) for ext in extensions)
+#                 or f.lower() == "meta.pkl"
+#             )
+
+#             if include_file:
+#                 total += os.path.getsize(os.path.join(root, f))
+
+#     return total
 
 def derive_complex_and_rsos(vol_ri):
     """Derived complex volume and RSOS from RI representation (W, H, D, C, T, 2)."""
@@ -113,7 +136,7 @@ def plot_all_rd_curves(results_list, output_dir):
 def main():
     parser = argparse.ArgumentParser(description="Comprehensive RD Curve Benchmarking V2")
     parser.add_argument("--files", nargs="+", required=True, help="Filenames in OCMR_data (e.g. fs_0045_3T.h5)")
-    parser.add_argument("--output_dir", type=str, default="results_rd_v2_spiht")
+    parser.add_argument("--output_dir", type=str, default="results_rd_v2_H266")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -173,7 +196,7 @@ def main():
             for codec in CODECS:
                 params = JPEG_QUALITIES if codec == "jpeg" else \
                          CRATIOS if codec == "jpeg2000" else \
-                         CRFS if codec in ["h264", "h265"] else SPIHT_BPPS
+                         CRFS if codec in ["h264", "h265", "h266"] else SPIHT_BPPS
 
                 for p in params:
                     tag = f"{codec}_{p}"
@@ -229,9 +252,12 @@ def main():
                             comp_time = time.time() - s_time
                             
                             s_time = time.time()
-                            decompress_video(work_dir, recon_npz)
+                            decompress_video(work_dir, recon_npz, codec=codec)
                             decomp_time = time.time() - s_time
-                            exts = [".mp4"]
+                            if codec == "h266":
+                                exts = [".mkv"]
+                            else:
+                                exts = [".mp4"]
                         
                     except Exception as e:
                         print(f"    Error processing {tag}: {e}")
